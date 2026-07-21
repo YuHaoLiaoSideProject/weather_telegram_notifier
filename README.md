@@ -8,6 +8,8 @@
 - ✅ 支援兩大資料源：
   - **Open-Meteo**（免費、免 API Key、全球覆蓋）← 預設
   - **中央氣象署 CWB 開放資料 API**（臺灣地區資料更詳細）
+- ✅ 自動 Failover：Open-Meteo 失敗自動切換 CWB 備援
+- ✅ Config-driven 架構：修改 `config.yaml` 即可調整設定
 - ✅ 天氣資訊包含：氣溫（最高/最低）、體感溫度、降雨機率、濕度、風速風向、紫外線指數
 - ✅ 支援手動觸發（GitHub UI 一键執行）
 - ✅ 可自訂城市與資料源
@@ -32,7 +34,31 @@ git clone <your-repo-url>
 cd weather_telegram_notifier
 ```
 
-### 3. 設定 GitHub Secrets
+### 3. 設定設定檔
+
+編輯 `config.yaml`（或複製為自訂路徑）：
+
+```yaml
+users:
+  - name: "Tony"
+    city: "臺北市"
+    detail_level: full
+    sources:
+      - name: openmeteo
+        priority: 1
+      - name: cwb
+        priority: 2
+        api_key: ${CWB_API_KEY}
+    notifiers:
+      - name: telegram
+        bot_token: ${TELEGRAM_BOT_TOKEN}
+        chat_id: ${TELEGRAM_CHAT_ID}
+```
+
+環境變數 `${TELEGRAM_BOT_TOKEN}`, `${TELEGRAM_CHAT_ID}`, `${CWB_API_KEY}`
+會在執行時自動從環境變數代換。
+
+### 4. 設定 GitHub Secrets
 
 在 GitHub Repo → **Settings → Secrets and variables → Actions** 新增：
 
@@ -40,38 +66,13 @@ cd weather_telegram_notifier
 |--------|------|------|
 | `TELEGRAM_BOT_TOKEN` | Telegram Bot Token（從 @BotFather 取得） | ✅ |
 | `TELEGRAM_CHAT_ID` | 接收通知的 Chat ID | ✅ |
-| `CWB_API_KEY` | CWB API Key（僅 source=cwb 時需要） | ❌ |
+| `CWB_API_KEY` | CWB API Key（僅使用 CWB source 時需要） | ❌ |
 
-### 4. 啟用 GitHub Actions
+### 5. 啟用 GitHub Actions
 
 Push 到 GitHub 後，Workflow 會自動啟用。
 - 預設排程：**每日 UTC 23:00（台灣時間 07:00）**
 - 也可在 GitHub → Actions → **Weather Forecast Notifier** → **Run workflow** 手動執行
-
-## 自訂設定
-
-### 變更城市
-
-在 `.github/workflows/weather_forecast.yml` 中修改 `WEATHER_LOCATION`：
-
-```yaml
-WEATHER_LOCATION: '高雄市'
-```
-
-或手動執行時在 GitHub UI 輸入城市名稱。
-
-### 變更資料源
-
-#### Open-Meteo（預設，免 API Key）
-
-支援全球城市，無需任何金鑰。
-
-#### CWB 氣象署 API（臺灣地區）
-
-1. 前往 [氣象署開放資料平臺](https://opendata.cwb.gov.tw/) 註冊
-2. 取得 API Key（授權碼）
-3. 在 GitHub Secrets 新增 `CWB_API_KEY`
-4. 在 Workflow 中設定 `WEATHER_SOURCE: cwb`
 
 ## 本地測試
 
@@ -83,15 +84,52 @@ pip install -r requirements.txt
 export TELEGRAM_BOT_TOKEN="your_token"
 export TELEGRAM_CHAT_ID="your_chat_id"
 
-# 執行（僅顯示，不發送）
-python -m src.main --location 臺北市 --dry-run
+# Dry-run（僅顯示，不發送）
+python -m src.main --dry-run
 
 # 執行並發送
+python -m src.main
+
+# 使用自訂設定檔
+python -m src.main --config /path/to/config.yaml
+
+# 覆蓋城市
 python -m src.main --location 高雄市
 
-# 使用 CWB API
-python -m src.main --source cwb --location 臺北市
+# 覆蓋詳細程度
+python -m src.main --detail basic
 ```
+
+## 自訂設定
+
+### `config.yaml` 欄位說明
+
+| 欄位 | 說明 | 預設值 |
+|------|------|--------|
+| `users[].name` | 使用者名稱（僅供辨識） | - |
+| `users[].city` | 城市名稱（如「臺北市」） | 臺北市 |
+| `users[].detail_level` | 詳細程度：`basic` / `standard` / `full` | `full` |
+| `users[].sources[].name` | 資料源名稱：`openmeteo` / `cwb` | - |
+| `users[].sources[].priority` | 優先順序（數字越小越優先） | - |
+| `users[].sources[].api_key` | API Key（可用 `${ENV_VAR}`） | - |
+| `users[].notifiers[].name` | 通知頻道：`telegram` | - |
+| `users[].notifiers[].bot_token` | Telegram Bot Token | `${TELEGRAM_BOT_TOKEN}` |
+| `users[].notifiers[].chat_id` | Telegram Chat ID | `${TELEGRAM_CHAT_ID}` |
+
+### 自訂 config 路徑
+
+可透過環境變數 `CONFIG_PATH` 或 `--config` 參數指定：
+
+```bash
+export CONFIG_PATH=/etc/weather/config.yaml
+python -m src.main
+```
+
+### Failover 行為
+
+系統會依照 `priority` 順序嘗試資料源：
+1. 第一個成功就停止
+2. 若全部失敗，發送錯誤通知
 
 ## 專案結構
 
@@ -99,12 +137,23 @@ python -m src.main --source cwb --location 臺北市
 weather_telegram_notifier/
 ├── .github/workflows/
 │   └── weather_forecast.yml    # GitHub Actions 排程
+├── config.yaml                 # 設定檔（Config-driven）
 ├── src/
 │   ├── __init__.py
 │   ├── main.py                 # 程式進入點
-│   ├── weather.py              # 天氣資料擷取（CWB / Open-Meteo）
-│   ├── formatter.py            # 訊息格式化
-│   └── notifier.py             # Telegram 發送
+│   ├── formatter.py            # 訊息格式化（共用）
+│   ├── core/
+│   │   ├── __init__.py
+│   │   ├── base.py             # DataSource / Notifier 抽象類別
+│   │   ├── config.py           # YAML 設定載入器
+│   │   └── pipeline.py         # 主流程編排
+│   ├── sources/
+│   │   ├── __init__.py
+│   │   ├── openmeteo.py        # Open-Meteo 資料源實作
+│   │   └── cwb.py              # CWB 氣象署資料源實作
+│   └── notifiers/
+│       ├── __init__.py
+│       └── telegram.py         # Telegram 通知頻道實作
 ├── requirements.txt
 └── README.md
 ```
@@ -120,6 +169,22 @@ weather_telegram_notifier/
 | 舒適度指數 | ❌ | ✅ |
 | 天氣綜合描述 | ❌ | ✅ |
 | 資料更新頻率 | 每小時 | 每日 4 次 |
+
+## 開發者說明
+
+### 加入新的資料源
+
+1. 在 `src/sources/` 下建立新模組
+2. 實作 `DataSource` 抽象類別（`fetch()` + `parse()`）
+3. 在 `src/main.py` 中註冊：`register_source("name", NewSource)`
+4. 在 `config.yaml` 中新增 source 條目
+
+### 加入新的通知頻道
+
+1. 在 `src/notifiers/` 下建立新模組
+2. 實作 `Notifier` 抽象類別（`send()`）
+3. 在 `src/main.py` 中註冊：`register_notifier("name", NewNotifier)`
+4. 在 `config.yaml` 中新增 notifier 條目
 
 ## 授權
 

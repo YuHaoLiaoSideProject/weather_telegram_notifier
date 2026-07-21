@@ -1,17 +1,12 @@
 # GitHub Actions Workflow: Weather Forecast Telegram Notifier
 #
-# Runs daily at 07:00 (Taiwan time = UTC 23:00前一天) to fetch weather
-# forecast and send it to your Telegram chat.
+# Runs daily at 07:00 (Taiwan time = UTC 23:00 previous day).
+# Configuration is driven by config.yaml in the repository root.
 #
 # Required Secrets:
 #   TELEGRAM_BOT_TOKEN   - Telegram Bot API token (from @BotFather)
 #   TELEGRAM_CHAT_ID     - Target chat/group ID
-#   CWB_API_KEY          - (optional) CWB API key if using source=cwb
-#
-# Optional variables (set in the workflow or as secrets):
-#   WEATHER_LOCATION     - City name, e.g. "臺北市" (default)
-#   WEATHER_SOURCE       - "openmeteo" (default) or "cwb"
-#   DETAIL_LEVEL         - "full" (default), "standard", or "basic"
+#   CWB_API_KEY          - (optional) CWB API key for CWB data source
 
 name: Weather Forecast Notifier
 
@@ -22,17 +17,13 @@ on:
   workflow_dispatch:      # Allow manual trigger from GitHub UI
     inputs:
       location:
-        description: 'City name (e.g. 臺北市)'
+        description: 'Override city name (e.g. 臺北市)'
         required: false
-        default: '臺北市'
-      source:
-        description: 'Data source: openmeteo or cwb'
-        required: false
-        default: 'openmeteo'
+        default: ''
       detail:
-        description: 'Detail level: full, standard, or basic'
+        description: 'Override detail level: full, standard, or basic'
         required: false
-        default: 'full'
+        default: ''
 
 env:
   PYTHON_VERSION: '3.11'
@@ -62,8 +53,12 @@ jobs:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID:   ${{ secrets.TELEGRAM_CHAT_ID }}
           CWB_API_KEY:        ${{ secrets.CWB_API_KEY }}
-          WEATHER_LOCATION:   ${{ github.event.inputs.location || '臺北市' }}
-          WEATHER_SOURCE:     ${{ github.event.inputs.source || 'openmeteo' }}
-          DETAIL_LEVEL:       ${{ github.event.inputs.detail || 'full' }}
         run: |
-          python -m src.main
+          ARGS=""
+          if [ -n "${{ github.event.inputs.location }}" ]; then
+            ARGS="$ARGS --location ${{ github.event.inputs.location }}"
+          fi
+          if [ -n "${{ github.event.inputs.detail }}" ]; then
+            ARGS="$ARGS --detail ${{ github.event.inputs.detail }}"
+          fi
+          python -m src.main $ARGS

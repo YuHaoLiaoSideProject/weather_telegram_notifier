@@ -1,0 +1,26 @@
+# ── Weather Telegram Notifier Configuration ──────────────────────────────────
+#
+# Environment variables referenced with ${VAR} syntax are resolved
+# automatically from the process environment at load time.
+#
+# Required env vars:
+#   TELEGRAM_BOT_TOKEN   - Telegram Bot API token (from @BotFather)
+#   TELEGRAM_CHAT_ID     - Target chat/group ID
+#
+# Optional env vars:
+#   CWB_API_KEY          - CWB API key (only needed if CWB source is used)
+
+users:
+  - name: "Tony"
+    city: "臺北市"
+    detail_level: full
+    sources:
+      - name: openmeteo
+        priority: 1
+      - name: cwb
+        priority: 2
+        api_key: ${CWB_API_KEY}
+    notifiers:
+      - name: telegram
+        bot_token: ${TELEGRAM_BOT_TOKEN}
+        chat_id: ${TELEGRAM_CHAT_ID}
