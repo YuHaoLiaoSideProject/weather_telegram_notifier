@@ -31,10 +31,7 @@ def _resolve_env_vars(value: Any) -> Any:
             var_name = match.group(1)
             val = os.environ.get(var_name)
             if val is None:
-                raise ValueError(
-                    f"Environment variable {var_name!r} is referenced in config.yaml "
-                    f"but is not set."
-                )
+                return ""
             return val
         return ENV_VAR_PATTERN.sub(_replacer, value)
     if isinstance(value, dict):
