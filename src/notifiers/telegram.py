@@ -56,6 +56,10 @@ class TelegramNotifier(Notifier):
             "parse_mode": "Markdown",
             "disable_web_page_preview": True,
         }
+        # Forum topic support (message_thread_id)
+        thread_id = kwargs.get("message_thread_id")
+        if thread_id is not None:
+            payload["message_thread_id"] = thread_id
 
         try:
             resp = requests.post(url, json=payload, timeout=15)

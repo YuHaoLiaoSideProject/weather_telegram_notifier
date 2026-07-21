@@ -55,6 +55,7 @@ class NotifierConfig:
     name: str
     bot_token: Optional[str] = None
     chat_id: Optional[str] = None
+    message_thread_id: Optional[int] = None
 
 
 @dataclass

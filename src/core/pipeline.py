@@ -152,6 +152,8 @@ def _send_to_all_notifiers(
             kwargs["bot_token"] = notif_cfg.bot_token
         if notif_cfg.chat_id:
             kwargs["chat_id"] = notif_cfg.chat_id
+        if notif_cfg.message_thread_id is not None:
+            kwargs["message_thread_id"] = notif_cfg.message_thread_id
 
         if dry_run:
             logger.info(
