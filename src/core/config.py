@@ -64,6 +64,7 @@ class UserConfig:
     name: str
     city: str
     detail_level: str = "full"
+    charts: bool = False
     sources: list[SourceConfig] = field(default_factory=list)
     notifiers: list[NotifierConfig] = field(default_factory=list)
 
@@ -125,6 +126,7 @@ def load_config(config_path: Optional[str] = None) -> Config:
             name=u.get("name", ""),
             city=u.get("city", "臺北市"),
             detail_level=u.get("detail_level", "full"),
+            charts=u.get("charts", False),
             sources=sources,
             notifiers=notifiers,
         ))

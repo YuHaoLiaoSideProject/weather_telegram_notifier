@@ -115,7 +115,17 @@ def run_pipeline(
             exit_code = 1
             continue
 
-        # ── 3. Format the forecast message ───────────────────────────────
+        # ── 3. Generate chart (if enabled) ───────────────────────────────
+        chart_path: str | None = None
+        if user.charts:
+            try:
+                from ..charts.weather_chart import generate_weather_chart
+                chart_path = generate_weather_chart(forecast, location)
+                logger.info("Chart generated: %s", chart_path)
+            except Exception as e:
+                logger.error("Failed to generate chart: %s", e)
+
+        # ── 4. Format the forecast message ───────────────────────────────
         message = format_forecast_message(
             forecast,
             location,
@@ -124,8 +134,8 @@ def run_pipeline(
         )
         logger.info("Formatted forecast message (%d chars)", len(message))
 
-        # ── 4. Send to each notifier ─────────────────────────────────────
-        _send_to_all_notifiers(user, message, dry_run)
+        # ── 5. Send to each notifier ─────────────────────────────────────
+        _send_to_all_notifiers(user, message, dry_run, chart_path=chart_path)
 
     return exit_code
 
@@ -134,8 +144,9 @@ def _send_to_all_notifiers(
     user: UserConfig,
     message: str,
     dry_run: bool,
+    chart_path: str | None = None,
 ) -> None:
-    """Send *message* through every notifier configured for *user*."""
+    """Send *message* (and optionally a chart photo) through every notifier."""
     for notif_cfg in user.notifiers:
         notif_cls = _notifier_registry.get(notif_cfg.name)
         if notif_cls is None:
@@ -155,6 +166,21 @@ def _send_to_all_notifiers(
         if notif_cfg.message_thread_id is not None:
             kwargs["message_thread_id"] = notif_cfg.message_thread_id
 
+        # Send chart photo first (if available)
+        if chart_path and hasattr(notifier, "send_local_photo"):
+            caption = f"🌤 {user.city} 未來 7 天天氣預報"
+            if dry_run:
+                logger.info(
+                    "[DRY-RUN] Would send chart to user=%s via %s (path=%s)",
+                    user.name, notif_cfg.name, chart_path,
+                )
+            else:
+                try:
+                    notifier.send_local_photo(chart_path, caption=caption, **kwargs)
+                except Exception as e:
+                    logger.error("Failed to send chart photo: %s", e)
+
+        # Send text message
         if dry_run:
             logger.info(
                 "[DRY-RUN] Would send to user=%s via %s",

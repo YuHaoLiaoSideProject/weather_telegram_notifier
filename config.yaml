@@ -14,6 +14,7 @@ users:
   - name: "松山區"
     city: "松山區"
     detail_level: basic
+    charts: true
     sources:
       - name: openmeteo
         priority: 1
@@ -26,6 +27,7 @@ users:
   - name: "內湖區"
     city: "內湖區"
     detail_level: basic
+    charts: true
     sources:
       - name: openmeteo
         priority: 1
