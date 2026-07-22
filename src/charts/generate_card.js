@@ -45,7 +45,7 @@ process.argv.slice(2).forEach((arg, i, arr) => {
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
-const WEEKDAY_MAP = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+const WEEKDAY_MAP = ["週日", "週一", "週二", "週三", "週四", "週五", "週六"];
 
 function shortWx(wx) {
   if (!wx) return "--";
