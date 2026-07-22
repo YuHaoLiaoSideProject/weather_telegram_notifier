@@ -48,6 +48,12 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
+      - name: Install system deps (Chromium + emoji font)
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq chromium fonts-noto-color-emoji
+          npm install puppeteer-core
+
       - name: Run weather notifier
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}

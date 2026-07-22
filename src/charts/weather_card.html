@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            background-color: #eef5f9;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        }
+        .card-container {
+            background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+            border-radius: 20px;
+            padding: 24px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+            border: 1px solid #b3e5fc;
+            width: 800px;
+        }
+        .header { text-align: center; margin-bottom: 20px; }
+        .header h1 { font-size: 22px; color: #1565c0; letter-spacing: 1px; }
+        .header .subtitle { font-size: 13px; color: #5c6bc0; margin-top: 4px; font-weight: 500; }
+        .weather-grid {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 8px 0;
+            margin-bottom: 16px;
+        }
+        .day-card {
+            background: rgba(255,255,255,0.85);
+            border-radius: 14px;
+            padding: 16px 8px;
+            text-align: center;
+            vertical-align: top;
+            width: 14.28%;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+            border: 1px solid rgba(255,255,255,0.6);
+        }
+        .day-name { font-size: 15px; font-weight: 700; color: #1a237e; }
+        .date { font-size: 12px; color: #7488a1; margin-bottom: 10px; }
+        .weather-icon { font-size: 16px; font-weight: 700; color: #1565c0; margin: 6px 0; }
+        .temp-range { font-size: 13px; font-weight: 600; color: #283593; margin-top: 8px; margin-bottom: 4px; }
+        .rain-info { font-size: 12px; color: #0288d1; font-weight: 500; }
+        .footer {
+            margin-top: 16px; padding-top: 12px;
+            border-top: 1px solid rgba(255,255,255,0.5);
+            font-size: 11px; color: #546e7a;
+            display: flex; justify-content: space-between;
+        }
+    </style>
+</head>
+<body>
+<div class="card-container" id="card">
+    <div class="header">
+        <h1>__LOCATION__ 七日天氣預報</h1>
+        <div class="subtitle">GitHub Action 自動化氣象推播</div>
+    </div>
+    <table class="weather-grid">
+        <tr>
+            __DAYS__
+        </tr>
+    </table>
+    <div class="footer">
+        <span>自動化推播 | 氣象資料來源：__SOURCE__</span>
+        <span>生成時間: __GENERATED__</span>
+    </div>
+</div>
+</body>
+</html>

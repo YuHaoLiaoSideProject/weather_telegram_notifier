@@ -125,14 +125,16 @@ def run_pipeline(
             except Exception as e:
                 logger.error("Failed to generate chart: %s", e)
 
-        # ── 4. Format the forecast message ───────────────────────────────
-        message = format_forecast_message(
-            forecast,
-            location,
-            source=source_name or "unknown",
-            detail_level=detail_level,
-        )
-        logger.info("Formatted forecast message (%d chars)", len(message))
+        # ── 4. Format the forecast message (only if charts disabled) ─────
+        message = None
+        if not user.charts:
+            message = format_forecast_message(
+                forecast,
+                location,
+                source=source_name or "unknown",
+                detail_level=detail_level,
+            )
+            logger.info("Formatted forecast message (%d chars)", len(message))
 
         # ── 5. Send to each notifier ─────────────────────────────────────
         _send_to_all_notifiers(user, message, dry_run, chart_path=chart_path)
@@ -142,7 +144,7 @@ def run_pipeline(
 
 def _send_to_all_notifiers(
     user: UserConfig,
-    message: str,
+    message: str | None,
     dry_run: bool,
     chart_path: str | None = None,
 ) -> None:
@@ -180,36 +182,37 @@ def _send_to_all_notifiers(
                 except Exception as e:
                     logger.error("Failed to send chart photo: %s", e)
 
-        # Send text message
-        if dry_run:
-            logger.info(
-                "[DRY-RUN] Would send to user=%s via %s",
-                user.name,
-                notif_cfg.name,
-            )
-            print(f"\n{'=' * 60}")
-            print(f"DRY-RUN: User={user.name}, Notifier={notif_cfg.name}")
-            print(f"{'=' * 60}")
-            print(message)
-        else:
-            try:
-                success = notifier.send(message, **kwargs)
-                if success:
-                    logger.info(
-                        "Sent to user=%s via %s successfully",
-                        user.name,
-                        notif_cfg.name,
-                    )
-                else:
-                    logger.error(
-                        "Failed to send to user=%s via %s",
-                        user.name,
-                        notif_cfg.name,
-                    )
-            except Exception as e:
-                logger.error(
-                    "Error sending to user=%s via %s: %s",
+        # Send text message (only if charts disabled)
+        if message:
+            if dry_run:
+                logger.info(
+                    "[DRY-RUN] Would send to user=%s via %s",
                     user.name,
                     notif_cfg.name,
-                    e,
                 )
+                print(f"\n{'=' * 60}")
+                print(f"DRY-RUN: User={user.name}, Notifier={notif_cfg.name}")
+                print(f"{'=' * 60}")
+                print(message)
+            else:
+                try:
+                    success = notifier.send(message, **kwargs)
+                    if success:
+                        logger.info(
+                            "Sent to user=%s via %s successfully",
+                            user.name,
+                            notif_cfg.name,
+                        )
+                    else:
+                        logger.error(
+                            "Failed to send to user=%s via %s",
+                            user.name,
+                            notif_cfg.name,
+                        )
+                except Exception as e:
+                    logger.error(
+                        "Error sending to user=%s via %s: %s",
+                        user.name,
+                        notif_cfg.name,
+                        e,
+                    )
