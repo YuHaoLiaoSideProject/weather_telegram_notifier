@@ -11,15 +11,24 @@
 #   CWB_API_KEY          - CWB API key (only needed if CWB source is used)
 
 users:
-  - name: "Tony"
-    city: "臺北市"
-    detail_level: full
+  - name: "松山區"
+    city: "松山區"
+    detail_level: basic
     sources:
       - name: openmeteo
         priority: 1
-      - name: cwb
-        priority: 2
-        api_key: ${CWB_API_KEY}
+    notifiers:
+      - name: telegram
+        bot_token: ${TELEGRAM_BOT_TOKEN}
+        chat_id: ${TELEGRAM_CHAT_ID}
+        message_thread_id: 1006
+
+  - name: "內湖區"
+    city: "內湖區"
+    detail_level: basic
+    sources:
+      - name: openmeteo
+        priority: 1
     notifiers:
       - name: telegram
         bot_token: ${TELEGRAM_BOT_TOKEN}
