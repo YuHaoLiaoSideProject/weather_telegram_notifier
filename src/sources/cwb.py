@@ -10,10 +10,34 @@ from datetime import datetime
 from typing import Optional
 
 import requests
+from requests.adapters import HTTPAdapter
+from urllib3.util import Retry
 
 from ..core.base import DataSource
 
 logger = logging.getLogger(__name__)
+
+
+# ── Shared HTTP session with retry ────────────────────────────────────────────
+
+def _create_session() -> requests.Session:
+    """Create a requests.Session with retry strategy and connection pooling."""
+    retry_strategy = Retry(
+        total=3,
+        backoff_factor=2,
+        status_forcelist=[429, 500, 502, 503, 504],
+        allowed_methods=["GET"],
+        raise_on_status=False,
+    )
+    adapter = HTTPAdapter(
+        max_retries=retry_strategy,
+        pool_connections=10,
+        pool_maxsize=20,
+    )
+    session = requests.Session()
+    session.mount("https://", adapter)
+    session.mount("http://", adapter)
+    return session
 
 CWB_API_BASE = "https://opendata.cwb.gov.tw/api/v1/rest/datastore"
 # 鄉鎮天氣預報 - 台灣未來 1 週天氣預報
@@ -56,6 +80,9 @@ class CWBDataSource(DataSource):
     or the ``CWB_API_KEY`` environment variable.
     """
 
+    def __init__(self):
+        self._session = _create_session()
+
     @property
     def name(self) -> str:
         return "cwb"
@@ -84,7 +111,7 @@ class CWBDataSource(DataSource):
                 "MinT,UVI,WeatherDescription,MinAT,MaxT,WD,Td"
             ),
         }
-        resp = requests.get(url, params=params, timeout=30)
+        resp = self._session.get(url, params=params, timeout=30)
         resp.raise_for_status()
         return resp.json()
 

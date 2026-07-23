@@ -18,6 +18,9 @@ users:
     sources:
       - name: openmeteo
         priority: 1
+      - name: cwb
+        priority: 2
+        api_key: ${CWB_API_KEY}
     notifiers:
       - name: telegram
         bot_token: ${TELEGRAM_BOT_TOKEN}
@@ -31,6 +34,9 @@ users:
     sources:
       - name: openmeteo
         priority: 1
+      - name: cwb
+        priority: 2
+        api_key: ${CWB_API_KEY}
     notifiers:
       - name: telegram
         bot_token: ${TELEGRAM_BOT_TOKEN}

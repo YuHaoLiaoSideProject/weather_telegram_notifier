@@ -7,10 +7,34 @@ import logging
 from datetime import datetime
 
 import requests
+from requests.adapters import HTTPAdapter
+from urllib3.util import Retry
 
 from ..core.base import DataSource
 
 logger = logging.getLogger(__name__)
+
+
+# ── Shared HTTP session with retry ────────────────────────────────────────────
+
+def _create_session() -> requests.Session:
+    """Create a requests.Session with retry strategy and connection pooling."""
+    retry_strategy = Retry(
+        total=3,                     # max 3 retries
+        backoff_factor=2,            # 2, 4, 8 seconds between retries
+        status_forcelist=[429, 500, 502, 503, 504],
+        allowed_methods=["GET"],
+        raise_on_status=False,
+    )
+    adapter = HTTPAdapter(
+        max_retries=retry_strategy,
+        pool_connections=10,
+        pool_maxsize=20,
+    )
+    session = requests.Session()
+    session.mount("https://", adapter)
+    session.mount("http://", adapter)
+    return session
 
 # ── Taiwan major cities coordinates ──────────────────────────────────────────
 
@@ -88,7 +112,12 @@ class OpenMeteoDataSource(DataSource):
     def name(self) -> str:
         return "openmeteo"
 
+    def __init__(self):
+        self._session = _create_session()
+
     def fetch(self, location: str, **kwargs) -> dict:
+        session = self._session
+
         # ── Resolve coordinates ──────────────────────────────────────────
         coords = CITY_COORDS.get(location)
         if coords is None:
@@ -100,7 +129,7 @@ class OpenMeteoDataSource(DataSource):
                 "language": "zh",
                 "format": "json",
             }
-            geo_resp = requests.get(geo_url, params=geo_params, timeout=10)
+            geo_resp = session.get(geo_url, params=geo_params, timeout=15)
             geo_resp.raise_for_status()
             geo_data = geo_resp.json()
             results = geo_data.get("results", [])
@@ -125,7 +154,7 @@ class OpenMeteoDataSource(DataSource):
             "timezone": "Asia/Taipei",
             "forecast_days": 7,
         }
-        resp = requests.get(url, params=params, timeout=15)
+        resp = session.get(url, params=params, timeout=30)
         resp.raise_for_status()
         return resp.json()
 
