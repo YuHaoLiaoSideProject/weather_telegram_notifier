@@ -51,7 +51,7 @@ jobs:
       - name: Install system deps (Chromium + emoji font)
         run: |
           sudo apt-get update -qq
-          sudo apt-get install -y -qq chromium fonts-noto-color-emoji
+          sudo apt-get install -y -qq chromium fonts-noto-color-emoji fonts-noto-cjk
           npm install puppeteer-core
 
       - name: Run weather notifier
