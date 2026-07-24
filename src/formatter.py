@@ -22,16 +22,17 @@ def _temp_emoji(max_t: float | None) -> str:
         return "🥶"
 
 
-def _pop_icon(pop: float | None) -> str:
+def _pop_label(pop: float | None) -> str:
+    """Return a short rain-probability string.
+    Only shown when odds are meaningful (>= 30%).
+    """
     if pop is None:
         return ""
-    if pop >= 70:
-        return "🌧"
-    elif pop >= 40:
-        return "🌦"
-    elif pop >= 10:
-        return "💧"
-    return ""
+    if pop >= 60:
+        return f"  🌧{pop:.0f}%"   # likely rain
+    elif pop >= 30:
+        return f"  🌦{pop:.0f}%"   # possible rain
+    return ""                         # low chance, skip
 
 
 def _extract_emoji(wx: str) -> str:
@@ -109,10 +110,8 @@ def format_forecast_message(
 
         temp_emoji = _temp_emoji(max_t)
 
-        # Rain
-        rain_str = ""
-        if pop is not None and pop >= 10:
-            rain_str = f"  {_pop_icon(pop)}{pop:.0f}%"
+        # Rain probability (only when >= 30%)
+        rain_str = _pop_label(pop)
 
         lines.append(
             f"{wd} {md}  {emoji}  {temp_str} {temp_emoji}{rain_str}"
