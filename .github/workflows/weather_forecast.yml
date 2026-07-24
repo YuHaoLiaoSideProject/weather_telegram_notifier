@@ -14,14 +14,14 @@ on:
   schedule:
     # Run daily at 07:00 AM Taiwan time (UTC 23:00 previous day)
     - cron: '0 23 * * *'
-  workflow_dispatch:      # Allow manual trigger from GitHub UI
+  workflow_dispatch:
     inputs:
       location:
-        description: 'Override city name (e.g. 臺北市)'
+        description: '📍 指定城市（預設：依 config.yaml，例如 臺北市）'
         required: false
         default: ''
       detail:
-        description: 'Override detail level: full, standard, or basic'
+        description: '📊 詳細程度：full（完整）/ standard（標準）/ basic（精簡）'
         required: false
         default: ''
 
