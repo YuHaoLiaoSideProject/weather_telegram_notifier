@@ -17,12 +17,39 @@ on:
   workflow_dispatch:
     inputs:
       location:
-        description: '📍 指定城市（預設：依 config.yaml，例如 臺北市）'
-        required: false
+        description: '📍 指定城市（留空則依 config.yaml）'
+        type: choice
+        options:
+          - ''
+          - '臺北市'
+          - '新北市'
+          - '桃園市'
+          - '臺中市'
+          - '臺南市'
+          - '高雄市'
+          - '基隆市'
+          - '新竹市'
+          - '苗栗縣'
+          - '彰化縣'
+          - '南投縣'
+          - '雲林縣'
+          - '嘉義市'
+          - '屏東縣'
+          - '宜蘭縣'
+          - '花蓮縣'
+          - '臺東縣'
+          - '澎湖縣'
+          - '金門縣'
+          - '連江縣'
         default: ''
       detail:
-        description: '📊 詳細程度：full（完整）/ standard（標準）/ basic（精簡）'
-        required: false
+        description: '📊 詳細程度'
+        type: choice
+        options:
+          - ''
+          - full
+          - standard
+          - basic
         default: ''
 
 env:
