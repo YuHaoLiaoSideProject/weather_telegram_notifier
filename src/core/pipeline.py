@@ -39,6 +39,10 @@ def run_pipeline(
 ) -> int:
     """Execute the full notification pipeline for all configured users.
 
+    When *override_location* is set, all users share the same city, so the
+    pipeline deduplicates by target *(chat_id, message_thread_id)* to avoid
+    sending identical messages multiple times.
+
     Args:
         config: Parsed configuration.
         dry_run: If True, print messages instead of sending.
@@ -50,11 +54,28 @@ def run_pipeline(
     """
     exit_code = 0
 
+    # Track targets already sent to (when location is overridden, all users
+    # share the same forecast → deduplicate)
+    _sent_targets: set[tuple[str, int | None]] = set()
+
     for user in config.users:
         logger.info("Processing user: %s (city=%s)", user.name, user.city)
 
         location = override_location or user.city
         detail_level = override_detail or user.detail_level
+
+        # ── Skip if this target already received the same overridden forecast
+        if override_location:
+            all_sent = all(
+                (n.chat_id or "", n.message_thread_id) in _sent_targets
+                for n in user.notifiers
+            )
+            if all_sent:
+                logger.info(
+                    "Skipping user=%s — all targets already sent (override_location)",
+                    user.name,
+                )
+                continue
 
         # ── 1. Try sources by ascending priority (failover) ──────────────
         sorted_sources = sorted(user.sources, key=lambda s: s.priority)
@@ -138,6 +159,12 @@ def run_pipeline(
 
         # ── 5. Send to each notifier ─────────────────────────────────────
         _send_to_all_notifiers(user, message, dry_run, chart_path=chart_path)
+
+        # Track targets that have been sent (for override_location dedup)
+        if override_location:
+            for notif_cfg in user.notifiers:
+                key = (notif_cfg.chat_id or "", notif_cfg.message_thread_id)
+                _sent_targets.add(key)
 
     return exit_code
 
