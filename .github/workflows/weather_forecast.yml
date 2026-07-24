@@ -75,21 +75,6 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Cache Node modules
-        uses: actions/cache@v4
-        id: cache-npm
-        with:
-          path: node_modules
-          key: ${{ runner.os }}-npm-${{ hashFiles('package-lock.json') }}
-
-      - name: Install system dependencies (Chromium, fonts, puppeteer-core)
-        run: |
-          sudo apt-get update -qq
-          sudo apt-get install -y -qq chromium fonts-noto-color-emoji fonts-noto-cjk
-          if [ ! -d node_modules ]; then
-            npm install puppeteer-core
-          fi
-
       - name: Run weather notifier
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
